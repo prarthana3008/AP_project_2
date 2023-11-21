@@ -1,0 +1,130 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "b9bbb1cc",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "                   product complaint_what_happened       date_sent_to_company  \\\n",
+      "0  Bank account or service                          2013-11-18T12:00:00-05:00   \n",
+      "1          Debt collection                          2014-09-04T12:00:00-05:00   \n",
+      "2                 Mortgage                          2014-08-28T12:00:00-05:00   \n",
+      "3              Credit card                          2012-06-15T12:00:00-05:00   \n",
+      "4  Bank account or service                          2012-06-21T12:00:00-05:00   \n",
+      "\n",
+      "                                      issue                  sub_product  \\\n",
+      "0                  Deposits and withdrawals             Checking account   \n",
+      "1                     Communication tactics                I do not know   \n",
+      "2  Application, originator, mortgage broker  Conventional fixed mortgage   \n",
+      "3                 Advertising and marketing                         None   \n",
+      "4     Problems caused by my funds being low             Checking account   \n",
+      "\n",
+      "  zip_code                           tags  has_narrative complaint_id timely  \\\n",
+      "0    94605                 Older American          False        99999    Yes   \n",
+      "1    93305                           None          False       999988    Yes   \n",
+      "2    32818                           None          False       999986    Yes   \n",
+      "3    98221                 Older American          False        99998    Yes   \n",
+      "4    19140  Older American, Servicemember          False        99997    Yes   \n",
+      "\n",
+      "  consumer_consent_provided         company_response submitted_via  \\\n",
+      "0                       N/A  Closed with explanation         Phone   \n",
+      "1                       N/A                   Closed           Web   \n",
+      "2                       N/A  Closed with explanation         Phone   \n",
+      "3                       N/A  Closed with explanation           Web   \n",
+      "4                       N/A                   Closed   Postal mail   \n",
+      "\n",
+      "                                company              date_received state  \\\n",
+      "0                 WELLS FARGO & COMPANY  2012-06-12T12:00:00-05:00    CA   \n",
+      "1         Kimball, Tirey & St. John LLP  2014-08-25T12:00:00-05:00    CA   \n",
+      "2                  JPMORGAN CHASE & CO.  2014-08-25T12:00:00-05:00    FL   \n",
+      "3     CAPITAL ONE FINANCIAL CORPORATION  2012-06-12T12:00:00-05:00    WA   \n",
+      "4  SANTANDER BANK, NATIONAL ASSOCIATION  2012-06-12T12:00:00-05:00    PA   \n",
+      "\n",
+      "  consumer_disputed company_public_response  \\\n",
+      "0                No                    None   \n",
+      "1                No                    None   \n",
+      "2               Yes                    None   \n",
+      "3                No                    None   \n",
+      "4                No                    None   \n",
+      "\n",
+      "                               sub_issue  \n",
+      "0                                   None  \n",
+      "1  Used obscene/profane/abusive language  \n",
+      "2                                   None  \n",
+      "3                                   None  \n",
+      "4                                   None  \n"
+     ]
+    }
+   ],
+   "source": [
+    "import requests\n",
+    "import pandas as pd\n",
+    "\n",
+    "class ConsumerComplaintsAPIClient:\n",
+    "    def __init__(self, base_url):\n",
+    "        self.base_url = base_url\n",
+    "\n",
+    "    def get_data(self, params={}):\n",
+    "        response = requests.get(self.base_url, params=params)\n",
+    "        response.raise_for_status()  # Raises an HTTPError if the status is 4xx or 5xx\n",
+    "        return response.json()\n",
+    "\n",
+    "    def to_dataframe(self, json_data):\n",
+    "        # Adjust this if the JSON structure is different\n",
+    "        return pd.DataFrame(json_data.get('hits', {}).get('hits', []))\n",
+    "\n",
+    "# Usage example:\n",
+    "base_url = 'https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/'\n",
+    "client = ConsumerComplaintsAPIClient(base_url)\n",
+    "\n",
+    "# Example params - customize these as needed based on the API's documentation\n",
+    "params = {\n",
+    "    'size': 10  # Limits the number of results returned\n",
+    "}\n",
+    "\n",
+    "json_response = client.get_data(params=params)\n",
+    "# The API nests the records under 'hits' -> 'hits', and each actual record is under the '_source' key\n",
+    "df = client.to_dataframe(json_response)\n",
+    "\n",
+    "# Since each complaint is nested under the '_source' key, we extract this into a separate DataFrame\n",
+    "df = pd.json_normalize(df['_source'])\n",
+    "\n",
+    "print(df.head())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "043a1fd1",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.4"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
